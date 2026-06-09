@@ -1,5 +1,5 @@
 # Build stage
-FROM maven:3.9.6-eclipse-temurin-17-alpine AS build
+FROM maven:3.9.6-eclipse-temurin-21-alpine AS build
 WORKDIR /app
 COPY pom.xml .
 # Pre-cache dependencies
@@ -8,7 +8,7 @@ COPY src ./src
 RUN mvn package -DskipTests -B
 
 # Run stage
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/gateway-service-1.0.0-SNAPSHOT.jar app.jar
 EXPOSE 8080
