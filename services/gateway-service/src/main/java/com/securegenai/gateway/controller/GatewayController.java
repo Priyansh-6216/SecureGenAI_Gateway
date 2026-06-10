@@ -69,6 +69,13 @@ public class GatewayController {
                 request.getUserId()
         );
 
+        if ("BLOCK".equals(response.getAction())) {
+            throw new com.securegenai.gateway.exception.GatewayException.PromptBlockedException(
+                    response.getReason(),
+                    response.getPolicyTriggered()
+            );
+        }
+
         return ResponseEntity.ok(response);
     }
 
