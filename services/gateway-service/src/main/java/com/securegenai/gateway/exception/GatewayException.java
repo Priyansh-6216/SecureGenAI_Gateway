@@ -37,4 +37,22 @@ public class GatewayException extends RuntimeException {
             super(message);
         }
     }
+
+    /**
+     * Thrown when authentication fails — invalid credentials, missing or expired token (HTTP 401).
+     */
+    public static class UnauthorizedException extends GatewayException {
+        public UnauthorizedException(String message) {
+            super(message);
+        }
+    }
+
+    /**
+     * Thrown when the authenticated user lacks the required role/permission (HTTP 403).
+     */
+    public static class ForbiddenException extends GatewayException {
+        public ForbiddenException(String message) {
+            super(message);
+        }
+    }
 }

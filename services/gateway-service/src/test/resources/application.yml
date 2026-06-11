@@ -1,0 +1,26 @@
+# Test configuration — overrides main application.yml for the test context.
+# Uses a fast BCrypt strength to speed up tests (UserDetailsServiceImpl uses strength 12 in prod).
+
+spring:
+  application:
+    name: gateway-service-test
+
+# JWT secret for tests (same format as prod, just needs to be 256-bit / 32+ bytes)
+security:
+  jwt:
+    secret: "3d6f2a9b1e4c8f7d5a2b9c4e1f8d3a6c2b5e9f1a4d7c0b3e6a9d2f5c8b1e4a7d"
+    access-token-expiry: 3600000
+    refresh-token-expiry: 86400000
+
+# Disable actuator in tests to reduce context load time
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+logging:
+  level:
+    com.securegenai: WARN
+    org.springframework.security: WARN
+    org.springframework.web: WARN

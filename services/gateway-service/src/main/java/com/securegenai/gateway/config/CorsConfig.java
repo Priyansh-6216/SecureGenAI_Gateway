@@ -1,34 +1,19 @@
 package com.securegenai.gateway.config;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
-
-import java.util.List;
-
 /**
- * Global CORS configuration for the Gateway Service.
- * Allows the React frontend (localhost:5173) to make cross-origin API calls.
+ * CORS configuration has been moved to
+ * {@link com.securegenai.gateway.security.SecurityConfig#corsConfigurationSource()}.
+ *
+ * <p>In Spring Security 6, CORS must be configured through the security filter chain
+ * via {@code http.cors(cors -> cors.configurationSource(...))} to ensure correct
+ * filter ordering. A standalone {@code CorsFilter} bean registered outside the
+ * security chain causes ordering conflicts and may silently bypass security rules.
+ *
+ * <p>This class is intentionally left as a documentation marker for Day 3.
+ * It will be removed in a cleanup commit.
+ *
+ * @see com.securegenai.gateway.security.SecurityConfig
  */
-@Configuration
 public class CorsConfig {
-
-    @Bean
-    public CorsFilter corsFilter() {
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(
-                "http://localhost:5173",
-                "http://localhost:3000"
-        ));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true);
-        config.setMaxAge(3600L);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/**", config);
-        return new CorsFilter(source);
-    }
+    // Intentionally empty — CORS is configured in SecurityConfig.
 }

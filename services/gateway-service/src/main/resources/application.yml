@@ -29,5 +29,30 @@ logging:
   level:
     com.securegenai: DEBUG
     org.springframework.web: INFO
+    org.springframework.security: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# ─── JWT / Security ────────────────────────────────────────────────────────────
+# Local dev uses JJWT (no AWS dependency).
+# For Cognito: activate the 'cognito' Spring profile and set the issuer-uri below.
+security:
+  jwt:
+    # 256-bit Base64-encoded secret (local dev only — rotate before any real deploy)
+    secret: "3d6f2a9b1e4c8f7d5a2b9c4e1f8d3a6c2b5e9f1a4d7c0b3e6a9d2f5c8b1e4a7d"
+    # Access token validity: 1 hour (ms)
+    access-token-expiry: 3600000
+    # Refresh token validity: 24 hours (ms)
+    refresh-token-expiry: 86400000
+
+# ─── Cognito Profile (optional) ───────────────────────────────────────────────
+# To enable Cognito OIDC validation, run with: --spring.profiles.active=cognito
+# and set:
+#   COGNITO_REGION=<your-region>
+#   COGNITO_USER_POOL_ID=<your-pool-id>
+# spring:
+#   security:
+#     oauth2:
+#       resourceserver:
+#         jwt:
+#           issuer-uri: https://cognito-idp.${COGNITO_REGION}.amazonaws.com/${COGNITO_USER_POOL_ID}

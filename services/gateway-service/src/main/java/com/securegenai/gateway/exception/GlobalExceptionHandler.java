@@ -5,6 +5,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -86,6 +88,72 @@ public class GlobalExceptionHandler {
                         .status(HttpStatus.BAD_REQUEST.value())
                         .error("Bad Request")
                         .message(ex.getMessage())
+                        .path(request.getRequestURI())
+                        .traceId(traceId)
+                        .build());
+    }
+
+    /**
+     * Handles authentication failures — invalid credentials, missing or expired JWT.
+     * Returns HTTP 401.
+     */
+    @ExceptionHandler(GatewayException.UnauthorizedException.class)
+    public ResponseEntity<ApiErrorResponse> handleUnauthorized(
+            GatewayException.UnauthorizedException ex, HttpServletRequest request) {
+
+        String traceId = UUID.randomUUID().toString();
+        log.warn("Unauthorized [traceId={}] [path={}] {}", traceId, request.getRequestURI(), ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiErrorResponse.builder()
+                        .timestamp(Instant.now())
+                        .status(HttpStatus.UNAUTHORIZED.value())
+                        .error("Unauthorized")
+                        .message(ex.getMessage())
+                        .path(request.getRequestURI())
+                        .traceId(traceId)
+                        .build());
+    }
+
+    /**
+     * Handles Spring Security AuthenticationException (e.g., bad credentials from auth manager).
+     * Returns HTTP 401.
+     */
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiErrorResponse> handleAuthenticationException(
+            AuthenticationException ex, HttpServletRequest request) {
+
+        String traceId = UUID.randomUUID().toString();
+        log.warn("Authentication failed [traceId={}] [path={}] {}", traceId, request.getRequestURI(), ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiErrorResponse.builder()
+                        .timestamp(Instant.now())
+                        .status(HttpStatus.UNAUTHORIZED.value())
+                        .error("Unauthorized")
+                        .message("Authentication failed: " + ex.getMessage())
+                        .path(request.getRequestURI())
+                        .traceId(traceId)
+                        .build());
+    }
+
+    /**
+     * Handles insufficient permissions — authenticated user lacks required role.
+     * Returns HTTP 403.
+     */
+    @ExceptionHandler({GatewayException.ForbiddenException.class, AccessDeniedException.class})
+    public ResponseEntity<ApiErrorResponse> handleForbidden(
+            RuntimeException ex, HttpServletRequest request) {
+
+        String traceId = UUID.randomUUID().toString();
+        log.warn("Access denied [traceId={}] [path={}] {}", traceId, request.getRequestURI(), ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiErrorResponse.builder()
+                        .timestamp(Instant.now())
+                        .status(HttpStatus.FORBIDDEN.value())
+                        .error("Forbidden")
+                        .message("Access denied: insufficient permissions to access this resource")
                         .path(request.getRequestURI())
                         .traceId(traceId)
                         .build());

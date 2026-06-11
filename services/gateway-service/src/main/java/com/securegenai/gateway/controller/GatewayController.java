@@ -7,11 +7,15 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.lang.management.ManagementFactory;
@@ -48,25 +52,37 @@ public class GatewayController {
             summary = "Process a prompt",
             description = "Submit a prompt through the full security pipeline: PII detection, "
                     + "data masking, risk scoring, and policy enforcement. Returns the security "
-                    + "evaluation result including the masked prompt."
+                    + "evaluation result including the masked prompt.",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Prompt processed successfully",
                     content = @Content(schema = @Schema(implementation = PromptResponse.class))),
             @ApiResponse(responseCode = "400", description = "Invalid request",
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "Prompt blocked by security policy",
+            @ApiResponse(responseCode = "401", description = "Unauthorized — valid JWT required",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Prompt blocked by security policy or insufficient role",
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
     @PostMapping("/prompts")
-    public ResponseEntity<PromptResponse> processPrompt(@Valid @RequestBody PromptRequest request) {
+    @PreAuthorize("hasAnyRole('ADMIN', 'SECURITY_ANALYST', 'EMPLOYEE')")
+    public ResponseEntity<PromptResponse> processPrompt(
+            @Valid @RequestBody PromptRequest request,
+            @AuthenticationPrincipal UserDetails principal
+    ) {
+        // Auto-populate userId from JWT when not explicitly provided in the body
+        String effectiveUserId = (request.getUserId() != null && !request.getUserId().isBlank())
+                ? request.getUserId()
+                : (principal != null ? principal.getUsername() : "anonymous");
+
         log.info("POST /api/v1/prompts [provider={}] [userId={}]",
-                request.getProvider(), request.getUserId());
+                request.getProvider(), effectiveUserId);
 
         PromptResponse response = promptSecurityService.processPrompt(
                 request.getPrompt(),
                 request.getProvider(),
-                request.getUserId()
+                effectiveUserId
         );
 
         if ("BLOCK".equals(response.getAction())) {
@@ -86,15 +102,21 @@ public class GatewayController {
     @Operation(
             summary = "Validate a prompt",
             description = "Check a prompt against security policies without forwarding to any LLM. "
-                    + "Returns risk assessment, detected entities, and the policy decision."
+                    + "Returns risk assessment, detected entities, and the policy decision.",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Validation result",
                     content = @Content(schema = @Schema(implementation = ValidationResponse.class))),
             @ApiResponse(responseCode = "400", description = "Invalid request",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized — valid JWT required",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "SECURITY_ANALYST or ADMIN role required",
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
     @PostMapping("/validate")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SECURITY_ANALYST')")
     public ResponseEntity<ValidationResponse> validatePrompt(@Valid @RequestBody ValidationRequest request) {
         log.info("POST /api/v1/validate [length={}]", request.getPrompt().length());
 

@@ -73,16 +73,19 @@ class PromptSecurityServiceTest {
 
     @Test
     void testProcessPrompt_BlockHighRisk() {
-        // SSN (30) + Secret (50) + Credit Card (35) = 115 -> clamped to 100
+        // SSN is present → Rule-001 fires FIRST (Block SSN), before Rule-003 (high risk check)
+        // Policy evaluation order: Rule-001 > Rule-003 > Rule-002 > Rule-004
         String prompt = "SSN: 000-12-3456, Key: sk-live-1234, CC: 1111-2222-3333-4444";
         PromptResponse response = securityService.processPrompt(prompt, "openai", "user123");
 
         assertNotNull(response);
         assertEquals("BLOCK", response.getAction());
-        assertEquals("Rule-003 (Deny High Risk)", response.getPolicyTriggered());
-        assertEquals(100, response.getRiskScore());
+        // Rule-001 fires first since SSN is detected
+        assertEquals("Rule-001 (Block SSN)", response.getPolicyTriggered());
+        assertEquals(100, response.getRiskScore()); // SSN(30)+Secret(50)+CC(35)=115 clamped to 100
         assertEquals("Critical", response.getSeverity());
     }
+
 
     @Test
     void testProcessPrompt_SourceCodeWarning() {
