@@ -632,7 +632,7 @@ feat: pii detection engine
 
 Project Status Update:
 
-[ ] Completed
+[x] Completed
 
 ----------------------------------------------------------
 DAY 6

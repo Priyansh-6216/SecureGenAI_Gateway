@@ -2,23 +2,34 @@ services:
   gateway-service:
     build:
       context: ./services/gateway-service
-      dockerfile: Dockerfile
     container_name: gateway-service
     ports:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=dev
-      # JWT signing secret — override with a strong secret in production
-      # For Cognito: add SPRING_PROFILES_ACTIVE=cognito and COGNITO_REGION / COGNITO_USER_POOL_ID
       - SECURITY_JWT_SECRET=3d6f2a9b1e4c8f7d5a2b9c4e1f8d3a6c2b5e9f1a4d7c0b3e6a9d2f5c8b1e4a7d
       - SECURITY_JWT_ACCESS_TOKEN_EXPIRY=3600000
       - SECURITY_JWT_REFRESH_TOKEN_EXPIRY=86400000
+      - PII_SERVICE_URL=http://pii-service:8081
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/v1/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+    networks:
+      - securegenai-network
+    depends_on:
+      - postgres
+      - pii-service
+
+  pii-service:
+    build:
+      context: ./services/pii-service
+      dockerfile: Dockerfile
+    container_name: pii-service
+    ports:
+      - "8081:8081"
     networks:
       - securegenai-network
 
