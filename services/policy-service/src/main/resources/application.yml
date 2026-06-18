@@ -1,0 +1,21 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: policy-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/securegenai}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none # Managed by gateway-service Flyway
+    show-sql: false
+
+logging:
+  level:
+    com.securegenai: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
