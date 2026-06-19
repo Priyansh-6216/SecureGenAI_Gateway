@@ -13,6 +13,7 @@ services:
       - PII_SERVICE_URL=http://pii-service:8081
       - MASKING_SERVICE_URL=http://masking-service:8082
       - POLICY_SERVICE_URL=http://policy-service:8083
+      - RISK_ENGINE_SERVICE_URL=http://risk-engine-service:8084
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/v1/health"]
       interval: 30s
@@ -54,6 +55,23 @@ services:
     container_name: policy-service
     ports:
       - "8083:8083"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/securegenai
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+    networks:
+      - securegenai-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  risk-engine-service:
+    build:
+      context: ./services/risk-engine-service
+      dockerfile: Dockerfile
+    container_name: risk-engine-service
+    ports:
+      - "8084:8084"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/securegenai
       - SPRING_DATASOURCE_USERNAME=postgres
