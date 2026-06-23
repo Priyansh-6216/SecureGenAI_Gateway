@@ -36,7 +36,11 @@ import {
   Warning as WarningIcon,
   Error as ErrorIcon,
   PlayArrow as PlayArrowIcon,
+  Dashboard as DashboardIcon,
+  AccountTree as AccountTreeIcon,
 } from '@mui/icons-material';
+
+import SecurityDashboard from './components/dashboard/SecurityDashboard';
 
 // Create the premium theme matching our design system
 const theme = createTheme({
@@ -146,6 +150,7 @@ function App() {
   );
   const [simulationResult, setSimulationResult] = useState<any>(null);
   const [isSimulating, setIsSimulating] = useState(false);
+  const [activeView, setActiveView] = useState<'simulator' | 'dashboard'>('dashboard');
 
   const services: ServiceStatus[] = [
     {
@@ -340,8 +345,33 @@ function App() {
 
       {/* Main Layout Container */}
       <Container maxWidth="xl" sx={{ mt: 5, mb: 8 }} className="animate-fade-in">
-        {/* Welcome Section */}
-        <Box sx={{ mb: 6, textAlign: 'center' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+          <Box sx={{ bgcolor: 'rgba(255,255,255,0.05)', borderRadius: 2, p: 0.5 }}>
+            <Button
+              variant={activeView === 'dashboard' ? 'contained' : 'text'}
+              onClick={() => setActiveView('dashboard')}
+              startIcon={<DashboardIcon />}
+              sx={{ borderRadius: 1.5 }}
+            >
+              Security Dashboard
+            </Button>
+            <Button
+              variant={activeView === 'simulator' ? 'contained' : 'text'}
+              onClick={() => setActiveView('simulator')}
+              startIcon={<AccountTreeIcon />}
+              sx={{ borderRadius: 1.5 }}
+            >
+              Gateway Simulator
+            </Button>
+          </Box>
+        </Box>
+
+        {activeView === 'dashboard' ? (
+          <SecurityDashboard />
+        ) : (
+          <>
+            {/* Welcome Section */}
+            <Box sx={{ mb: 6, textAlign: 'center' }}>
           <Typography variant="h3" component="h1" gutterBottom sx={{ background: 'linear-gradient(90deg, #c084fc, #60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', mb: 2 }}>
             SecureGenAI Gateway Dashboard
           </Typography>
@@ -571,6 +601,8 @@ function App() {
             </Paper>
           </Grid>
         </Grid>
+        </>
+        )}
       </Container>
     </ThemeProvider>
   );
