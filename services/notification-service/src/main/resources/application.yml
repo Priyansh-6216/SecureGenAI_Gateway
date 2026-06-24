@@ -1,0 +1,17 @@
+server:
+  port: 8088
+
+spring:
+  application:
+    name: notification-service
+  mail:
+    host: smtp.example.com
+    port: 587
+    username: alert@securegenai.com
+    password: dummy-password
+
+notifications:
+  slack:
+    webhook-url: "https://hooks.slack.com/services/dummy/url"
+  teams:
+    webhook-url: "https://outlook.office.com/webhook/dummy/url"
